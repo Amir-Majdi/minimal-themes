@@ -1,59 +1,46 @@
-name: Build VSIX
+name: Build VSIX & Release
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
     tags:
-      - "v*.*.*"
+      - 'v*'
+
+permissions:
+  contents: write
 
 jobs:
   build:
-    name: Package VSIX
+    name: Build VSIX
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Use Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-
-      - name: Install vsce
-        run: npm i -g @vscode/vsce
-
-      - name: Install deps (if any)
-        run: npm ci || npm i
-
-      - name: Package
-        run: vsce package
-        # Produces something like minimal-themes-1.0.1.vsix
-
-      - name: Upload artifact (always)
+          node-version: 20
+      - run: npm i -g @vscode/vsce
+      - run: vsce package
+      - name: Upload VSIX artifact
         uses: actions/upload-artifact@v4
         with:
           name: vsix
-          path: "*.vsix"
+          path: '*.vsix'
 
   release:
-    name: Create GitHub Release (on tag)
-    if: startsWith(github.ref, 'refs/tags/')
+    name: Create GitHub Release
     needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
-      - name: Download artifact
+      - uses: actions/checkout@v4
+      - name: Download VSIX artifact
         uses: actions/download-artifact@v4
         with:
           name: vsix
-          path: ./dist
-
-      - name: Get VSIX filename
-        id: vsix
-        run: echo "file=$(ls dist/*.vsix | head -n1)" >> $GITHUB_OUTPUT
-
-      - name: Create Release
+          path: .
+      - name: Create release and upload asset
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ steps.vsix.outputs.file }}
-          generate_release_notes: true
+          files: "*.vsix"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
