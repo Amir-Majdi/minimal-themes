@@ -4,7 +4,7 @@
   "displayName": "Minimal Themes",
   "icon": "assets/icon.png",
   "description": "Minimal, distraction free & focus oriented themes for your environment.",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "engines": {
     "vscode": "^1.67.0"
   },
